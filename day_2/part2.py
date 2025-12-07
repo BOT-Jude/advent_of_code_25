@@ -1,44 +1,25 @@
 
 import math
+import sympy
 
 
 print("Hello world, and good luck!")
 
-def _p_sum(ndigits, limit=None):
+def get_maximal(d, i, limit):
     """
-        Sum all ndigit pallendromic numbers up to limit
+        Get the highest 'd' digit ('i')-palendromic number less than or equal to limit
     """
+    assert len(limit) >= d
+    assert d % i == 0
 
-    half_digits = ndigits//2
+    k = d//i
 
-    half_upper = min(int(limit[:(len(limit)//2)]), int('9' * half_digits))
-    half_lower = int('1' + '0' * (half_digits-1))
+    if len(limit) > d:
+        return '9' * k
+    else:
 
-    lower_total = ((half_upper * (half_upper + 1)) // 2) - ((half_lower * (half_lower + 1)) // 2) + half_lower
-    upper_total = (((half_upper * (half_upper + 1)) // 2) - ((half_lower * (half_lower + 1)) // 2) + half_lower) * int(math.pow(10, half_digits))
 
-    return lower_total + upper_total
 
-def p_sum(limit: str):
-    """
-        Sum all pallendromic numbers up to limit
-    """
-    ndigits = len(limit)
-    half_digits = ndigits // 2
-    assert ndigits % 2 == 0, limit
-    assert ndigits > 0
-    half_limit = limit[:half_digits]
-
-    total = 0
-    for i in range(1, half_digits+1):
-        total += _p_sum(2*i, limit=limit)
-
-    return total
-
-def get_minimal_pal(n):
-    """
-        Get the lowest pallendromic number greater than or equal to 'n'
-    """
     ndigits = len(n)
     if ndigits % 2 == 1:
         first = int(math.pow(10, (ndigits // 2)))
@@ -51,15 +32,43 @@ def get_minimal_pal(n):
         else:
             return str(first_n) + str(first_n)
 
-def sum_contained_pals(start, end):
+def _p_sum(d, i, limit):
+    """
+        Sum all 'd' digit ('i')-pallendromic numbers up to and (potentually) including limit
+    """
 
-    lower_minimal = get_minimal_pal(start)
-    upper_minimal = get_minimal_pal(str(int(end) + 1)) # must be strictly greater than
+    assert d % i == 0
 
-    return p_sum(upper_minimal) - p_sum(lower_minimal) - int(upper_minimal) + int(lower_minimal)
+    k = d//i
+
+    upper = int(get_minimal(d, i, limit=limit)) # get the lowest 'd' digit ('i')-palendromic number greater than or equal to limit
+    lower = 
+
+    lower = int('1' + '0' * (k-1))
+    cumulative_digit_sum = ((upper * (upper + 1)) // 2) - ((lower * (lower + 1)) // 2) + lower
+    if upper > int(limit): cumulative_digit_sum -= upper
+    total = cumulative_digit_sum * (sum([int(math.pow(10, k*j)) for j in range(i)]))
+    if i != 1: total -= _p_sum(d, 1, limit=limit) # don't double count 1-pallendromic numbers
+
+    return total
+
+def p_sum(limit):
+
+    total = 0
+    for d in range(1, len(limit)+1):
+        factors = sympy.primefactors(d)
+        factors += [1]
+        for i in factors:
+            total += _p_sum(d, i, limit)
+
+    return total
+
+def sum_contained(start, end):
+
+    return p_sum(start) - p_sum(str(int(end)-1))
 
 if __name__ == '__main__':
 
     with open('input.txt') as f:
         ranges = [block.split('-') for block in f.readline().strip('\n').split(',')]
-        print(sum([sum_contained_pals(start, end) for start, end in ranges]))
+        print(sum([sum_contained(start, end) for start, end in ranges]))
